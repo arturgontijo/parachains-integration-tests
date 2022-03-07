@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { run } from 'polkadot-launch'
+
 import { spawn } from 'child_process';
 import { Command, Option } from 'commander';
 import {
@@ -10,7 +12,9 @@ import {
 const program = new Command();
 
 const spawnPolkadotLaunch = (options) => {
-  spawn('polkadot-launch', [options.config], {
+  console.log(__dirname)
+  spawn(`aaaaaa${__dirname}/polkadot-launch`, [options.config], {
+    shell: true,
     stdio: 'inherit',
     detached: false,
   });
@@ -18,9 +22,10 @@ const spawnPolkadotLaunch = (options) => {
 
 const spawnTests = (options) => {
   spawn(
-    'mocha',
-    ['--timeout 100000', '--exit', '-r', 'ts-node/register', 'src/run.ts'],
+    'node_modules/.bin/mocha',
+    ['--timeout 100000', '--exit', 'dist/run.js'],
     {
+      shell: true,
       stdio: 'inherit',
       detached: false,
       env: {
