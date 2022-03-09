@@ -13,7 +13,7 @@ const program = new Command();
 
 const spawnPolkadotLaunch = (options) => {
   console.log(__dirname)
-  spawn(`aaaaaa${__dirname}/polkadot-launch`, [options.config], {
+  spawn(`${__dirname}/polkadot-launch`, [options.config], {
     shell: true,
     stdio: 'inherit',
     detached: false,
@@ -22,7 +22,7 @@ const spawnPolkadotLaunch = (options) => {
 
 const spawnTests = (options) => {
   spawn(
-    'node_modules/.bin/mocha',
+    `${__dirname}/mocha`,
     ['--timeout 100000', '--exit', 'dist/run.js'],
     {
       shell: true,
