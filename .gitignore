@@ -3,6 +3,9 @@ node_modules
 .vscode
 /bin/polkadot*
 /bin/parachain*
+/bin/lemon-parachain-a
+/bin/lemon-parachain-b
+bin/old
 /logs
 /*.json
 *.log

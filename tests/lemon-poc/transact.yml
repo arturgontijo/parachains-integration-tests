@@ -1,0 +1,171 @@
+---
+settings:
+  chains:
+    relay_chain:
+      wsPort: 9900
+    lemon_para_A: &lp_A
+      wsPort: 9910
+    lemon_para_B: &lp_B
+      wsPort: 9920
+      paraId: &lp_id_B 2001
+  variables:
+    common:
+      required_weight_at_most: &weight_at_most 1000000000
+      amountX2: &amountX2 2000000000000
+      amount: &amount 1000000000000
+    chains:
+      relay_chain:
+        ksm: &rc_ksm { concrete: { parents: 1, interior: { here: true }}}
+        ksm_fungible: &rc_ksm_fungible { id: *rc_ksm, fun: { fungible: *amount }}
+      lemon_para_A:
+        signer: &lp_A_signer //Alice
+        # community_para_B_destination: &cp_B_dest { v1: { parents: 1, interior: { x1: { parachain: *cp_id_B }}}}
+        # sovereign_account: &cp_A_sovereign F7fq1jSNVTPfJmaHaXCMtatT1EZefCUsa7rRiQVNR5efcah
+        # sovereign_account: &cp_A_sovereign FBeL7EAeUroLWXW1yfKboiqTqVfbRBcsUKd6QqVf4kGBySS
+        sovereign_account: &lp_A_sovereign 5Eg2fntJ27qsari4FGrGhrMqKFDRnkNSR6UshkZYBGXmSuC8
+        # community_para_B_asset: &cp_B_asset { concrete: { parents: 1, interior: { x1: { parachain: *cp_id_B }}}}
+        # community_para_B_asset_fungible: &cp_B_fungible { id: *cp_B_asset, fun: { fungible: *amount }}
+      community_para_B:
+        signer: &lp_B_signer //Alice
+  decodedCalls:
+    system_remark:
+      chain: *lp_B
+      pallet: system
+      call: remark
+      args: [ 0x0011 ]
+    balance_transfer:
+      chain: *lp_B
+      pallet: balances
+      call: transfer
+      args: [
+        5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty,
+        *amount
+      ]
+
+tests:
+  - name: Performs a Remote Swap
+    before:
+      - name: DEPENDANCY | Lemon Parachain A sovereign account in Lemon Parachain B needs to be funded
+        actions:
+          - extrinsics:
+            - chain: *lp_B
+              delay: 1000
+              signer: *lp_B_signer
+              pallet: balances
+              call: transfer
+              args: [ 
+                *lp_A_sovereign, # destination
+                *amountX2, # value
+              ]
+              events:
+                - name: balances.Transfer
+    its:
+      - name: Should perform a remote swap
+        actions: 
+          - extrinsics: #0x33010100010100d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d010000020432050400070010a5d4e8010000020432050800070010a5d4e8
+            - chain: *lp_A
+              signer: *lp_A_signer
+              # sudo: true
+              pallet: swap
+              call: swap
+              args: [
+                {
+                  v1: {
+                    parents: 0,
+                    interior: {
+                      x1: {
+                        AccountId32: {
+                          network: Any,
+                          id: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d'
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  V1: {
+                    id: {
+                      Concrete: {
+                        parents: 0,
+                        interior: {
+                          X2: [
+                            {
+                              PalletInstance: 50
+                            },
+                            {
+                              GeneralIndex: 1
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    fun: {
+                      Fungible: 1000000000000
+                    }
+                  }
+                },  
+                {
+                  V1: {
+                    id: {
+                      Concrete: {
+                        parents: 0,
+                        interior: {
+                          X2: [
+                            {
+                              PalletInstance: 50
+                            },
+                            {
+                              GeneralIndex: 2
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    fun: {
+                      Fungible: 1000000000000
+                    }
+                  }
+                }
+              ]
+
+    # describes:
+    #   - name: polkadotXcm.send | Superuser - Transact(system.remark) | Para A -> Para B
+    #     its:
+    #       - name: Should send a Transact to be executed in a sibling Parachain
+    #         actions:
+    #           - extrinsics:
+    #             - chain: *lp_A
+    #               delay: 1000
+    #               signer: *lp_A_signer
+    #               sudo: true
+    #               pallet: polkadotXcm
+    #               call: send
+    #               args: [ 
+    #                   *cp_B_dest, # destination 
+    #                   { 
+    #                     v2: [ #message
+    #                       { 
+    #                         WithdrawAsset: [*rc_ksm_fungible]
+    #                       },
+    #                       {
+    #                         BuyExecution: {
+    #                             fees: *rc_ksm_fungible,
+    #                             weightLimit: Unlimited
+    #                         }
+    #                       },
+    #                       { 
+    #                         Transact: { 
+    #                           originType: SovereignAccount, 
+    #                           requireWeightAtMost: *weight_at_most, 
+    #                           call: $balance_transfer
+    #                         }
+    #                       }
+    #                     ]  
+    #                   }
+    #                 ]
+    #               events:
+    #                 - name: sudo.Sudid
+    #                   attributes:
+    #                     type: Result<Null, SpRuntimeDispatchError>
+    #                     value: Ok
+    #                 - name: polkadotXcm.Sent
