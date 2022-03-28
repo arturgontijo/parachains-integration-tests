@@ -13,6 +13,9 @@ settings:
       required_weight_at_most: &weight_at_most 1000000000
       amountX2: &amountX2 2000000000000
       amount: &amount 1000000000000
+      asset_id_from: &asset_id_from 1
+      asset_id_to: &asset_id_to 2
+      sudo_wallet: &sudo_wallet HNZata7iMYWmk5RvZRTiAsSDhV8366zq2YGb3tLH5Upf74F
     chains:
       relay_chain:
         ksm: &rc_ksm { concrete: { parents: 1, interior: { here: true }}}
@@ -28,6 +31,7 @@ settings:
         # community_para_B_asset_fungible: &cp_B_fungible { id: *cp_B_asset, fun: { fungible: *amount }} 
       lemon_para_B:
         signer: &lp_B_signer //Alice
+        liquidity_pool: &lp_B_liquidity_pool 5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM
   decodedCalls:
     system_remark:
       chain: *lp_B
@@ -46,7 +50,7 @@ settings:
 tests:
   - name: Performs a Remote Swap
     before:
-      - name: DEPENDANCY | Lemon Parachain A sovereign account in Lemon Parachain B needs to be funded
+      - name: DEPENDANCY | Lemon Parachain A's sovereign account in Lemon Parachain B needs to be funded
         actions:
           - extrinsics:
             - chain: *lp_B
@@ -61,7 +65,7 @@ tests:
               events:
                 - name: balances.Transfer
 
-      - name: DEPENDANCY | Asset with Id=2 should exist in Lemon Parachain A
+      - name: DEPENDANCY | 'asset_to' should exist in Lemon Parachain A
         actions:
           - extrinsics:
             - chain: *lp_A
@@ -71,13 +75,13 @@ tests:
               pallet: assets
               call: forceCreate
               args: [
-                2,
-                { Id: HNZata7iMYWmk5RvZRTiAsSDhV8366zq2YGb3tLH5Upf74F }, # owner
+                *asset_id_to,
+                { Id: *sudo_wallet }, # owner
                 true, # isSufficient
                 1000 # minBalance
               ]
 
-      - name: DEPENDANCY | Asset with Id=2 should exist in Lemon Parachain B
+      - name: DEPENDANCY | `asset_to` should exist in Lemon Parachain B
         actions:
           - extrinsics:
             - chain: *lp_B
@@ -87,10 +91,25 @@ tests:
               pallet: assets
               call: forceCreate
               args: [
-                2,
-                { Id: HNZata7iMYWmk5RvZRTiAsSDhV8366zq2YGb3tLH5Upf74F }, # owner
+                *asset_id_to,
+                { Id: *sudo_wallet }, # owner
                 true, # isSufficient
                 1000 # minBalance
+              ]
+
+      - name: DEPENDANCY | Liquidity Pool in Lemon Parachain B should have some 'asset_to' balance
+        actions:
+          - extrinsics:
+            - chain: *lp_B
+              delay: 1000
+              signer: *lp_B_signer
+              # sudo: true
+              pallet: assets
+              call: mint
+              args: [
+                *asset_id_to,
+                { Id: *lp_B_liquidity_pool },
+                10000000000000
               ]
 
     its:
@@ -104,7 +123,7 @@ tests:
               call: swap
               args: [
                 {
-                  v1: {
+                  v1: { # beneficiary
                     parents: 0,
                     interior: {
                       x1: {
@@ -117,7 +136,7 @@ tests:
                   }
                 },
                 {
-                  V1: {
+                  V1: { # asset_from
                     id: {
                       Concrete: {
                         parents: 0,
@@ -127,7 +146,7 @@ tests:
                               PalletInstance: 50
                             },
                             {
-                              GeneralIndex: 1
+                              GeneralIndex: *asset_id_from
                             }
                           ]
                         }
@@ -138,7 +157,7 @@ tests:
                     }
                   }
                 },  
-                {
+                { # asset_to
                   V1: {
                     id: {
                       Concrete: {
@@ -149,7 +168,7 @@ tests:
                               PalletInstance: 50
                             },
                             {
-                              GeneralIndex: 2
+                              GeneralIndex: *asset_id_to
                             }
                           ]
                         }
