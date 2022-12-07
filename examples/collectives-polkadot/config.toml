@@ -1,37 +1,33 @@
 [relaychain]
-default_command = "./bin/polkadot"
+default_command = "./bin/polkadot-0929"
 default_args = [ "-lparachain=trace", "-lxcm=trace" ]
-chain = "westend-local"
+chain = "polkadot-local"
 
-  [[relaychain.nodes]]
-  name = "alice"
-  ws_port = 9900
-  validator = true
+    [[relaychain.nodes]]
+    name = "alice"
+    ws_port = 9700
+    validator = true
 
-  [[relaychain.nodes]]
-  name = "bob"
-  validator = true
+    [[relaychain.nodes]]
+    name = "bob"
+    validator = true
 
-  [[relaychain.nodes]]
-  name = "charlie"
-  validator = true
-
-  [[relaychain.nodes]]
-  name = "dave"
-  validator = true
+    [[relaychain.nodes]]
+    name = "charlie"
+    validator = true
 
 [[parachains]]
-id = 1002
+id = 1001
 chain = "collectives-polkadot-local"
 cumulus_based = true
 
-  [[parachains.collators]]
-  name = "collator1"
-  ws_port = 9910
-  command = "./bin/polkadot-parachain"
-  args = ["-lxcm=trace"]
+    [[parachains.collators]]
+    name = "collator1"
+    ws_port = 9710
+    command = "./bin/polkadot-parachain-9290"
+    args = ["-lxcm=trace"]
 
-  [[parachains.collators]]
-  name = "collator2"
-  command = "./bin/polkadot-parachain"
-  args = ["-lxcm=trace"]
+    [[parachains.collators]]
+    name = "collator2"
+    command = "./bin/polkadot-parachain-9290"
+    args = ["-lxcm=trace"]

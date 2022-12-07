@@ -2,6 +2,8 @@ export interface TestFile {
   name: string;
   dir: string;
   yaml: TestsConfig;
+  yamlDoc: any;
+  file: string;
 }
 export interface TestsConfig {
   settings: Settings;
@@ -32,7 +34,7 @@ export type Hook = Before | BeforeEach | After | AfterEach;
 
 export interface Custom {
   path: string;
-  args: any;
+  args: any[];
 }
 
 export interface Query {
@@ -52,6 +54,7 @@ export interface Rpc {
 }
 
 export interface Call {
+  encode?: boolean; // Indicates if the Call should be encoded
   chain: Chain;
   sudo?: boolean; // if 'true', the call will be wrapped with 'sudo.sudo()'
   pallet: string;
@@ -70,29 +73,40 @@ export interface Event {
   name: string;
   remote: boolean; // indicates if its considered as a remote event (different chain context)
   timeout?: number; // overrides de default event listener timeout
-  attribute?: Attribute;
+  attributes?: Attribute[];
+  result?: object;
+  strict: boolean;
+}
+
+export interface EventData {
+  type: string;
+  lookupName: string;
+  key?: string;
+  value: any;
+  xcmOutcome?: XcmOutcome; // only for 'XcmV2TraitsOutcome' type
 }
 
 export interface EventResult extends Event {
-  remote: boolean;
   received: boolean;
   ok: boolean;
   message: string;
-  data?: any;
-  xcmOutput: XcmOutput;
-}
-
-export interface XcmOutput {
-  expected: string | undefined;
-  real: string | undefined;
+  data: EventData[];
+  record?: any;
 }
 
 export interface Attribute {
-  type: string;
+  type?: string;
+  key?: string;
+  isRange?: boolean;
+  threshold?: [number, number];
   value?: any;
-  isComplete?: boolean; // only for 'XcmV2TraitsOutcome' type
-  isIncomplete?: boolean; // only for 'XcmV2TraitsOutcome' type
-  isError?: boolean; // only for 'XcmV2TraitsOutcome' type
+  xcmOutcome?: XcmOutcome; // only for 'XcmV2TraitsOutcome' type
+}
+
+export enum XcmOutcome {
+  Complete = 'Complete',
+  Incomplete = 'Incomplete',
+  Error = 'Error',
 }
 
 export interface It {
@@ -122,6 +136,19 @@ export type AssertOrCustom = Assert | Custom;
 export interface Chain {
   wsPort: number;
   ws?: string; // if undefined, it fallsback to the default value -> ws://localhost
+  paraId: number;
+}
+export interface ChainConfigs {
+  chainName: string;
+  ss58Format: number;
+}
+export interface Connection {
+  name: string;
+  configs: ChainConfigs;
+  api: any;
+  isApiReady: boolean;
+  subscriptions: object;
+  lastBlock: string;
 }
 export interface Settings {
   chains: { [key: string]: Chain };
@@ -132,4 +159,38 @@ export interface Settings {
 export interface PaymentInfo {
   partialFee: any;
   weight: any;
+}
+
+export interface Range {
+  valid: boolean;
+  lowerLimit: BigInt;
+  upperLimit: BigInt;
+}
+
+export interface CheckerError {
+  file: string;
+  errors: Array<string>;
+}
+
+export interface Interface {
+  instance?: any;
+  type?: string,
+  anyKey?: boolean,
+  attributes?: { [key: string]: boolean };
+  rule?: object;
+}
+
+export interface Assessment {
+  parentKey: string | undefined;
+  parentRange: any;
+  key: string | undefined;
+  exist: boolean | undefined;
+  rightFormat: boolean | undefined;
+  format: string | undefined
+  range: any;
+}
+
+export interface ParentNode {
+  key: string
+  range: any
 }
